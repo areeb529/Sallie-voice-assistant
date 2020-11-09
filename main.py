@@ -1,10 +1,10 @@
 import speech_recognition as sr
-import webbrowser
-import time
-import os
-import random
 import pyttsx3
 from time import ctime
+import webbrowser
+import time
+import random
+import os
 
 r = sr.Recognizer()
 
@@ -12,15 +12,15 @@ speaker = pyttsx3.init()
 voices = speaker.getProperty('voices')
 speaker.setProperty('voice', voices[1].id)
 rate = speaker.getProperty('rate')
-speaker.setProperty('rate', 173)
+speaker.setProperty('rate', 150)
 
-def record_audio(ask=False):
-    with sr.Microphone() as source:
-        if ask:
-            sallie_speak(ask)
-            print(ask)
-        # Capture mic data
-        audio = r.listen(source)
+
+def record_audio(query=False):
+    with sr.Microphone() as source:     # microphone as source
+        if query:
+            sallie_speak(query)
+            print(query)
+        audio = r.listen(source)    # listen for the audio via source
         voice_data = ''
         try:
             voice_data = r.recognize_google(audio)
@@ -28,7 +28,9 @@ def record_audio(ask=False):
         except sr.UnknownValueError:
             sallie_speak('Sorry, I did not get that')
         except sr.RequestError:
+            # error: recognizer is not connected
             sallie_speak('Sorry, I cannot process your request at the moment')
+        print(f">> {voice_data.lower()}")  # print what user said
         return voice_data
 
 
@@ -67,4 +69,3 @@ sallie_speak('How can I help you?')
 while 1:
     voice_data = record_audio()
     respond(voice_data)
-
