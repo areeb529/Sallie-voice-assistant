@@ -41,13 +41,13 @@ def record_audio(query=False):
 
 
 def sallie_speak(audio_string):
-    print('Saillie: ' + audio_string)
+    print('Sallie: ' + audio_string)
     speaker.say(audio_string)
     speaker.runAndWait()
 
 
-def there_exists(words):
-    for word in words:
+def there_exists(list_of_words):
+    for word in list_of_words:
         if word in voice_data:
             return True
 
@@ -63,7 +63,7 @@ def respond(voice_data):
     if there_exists(["how are you", "how are you doing"]):
         sallie_speak(f"I'm very well, thanks for asking {person_obj.name}")
 
-    if there_exists(["what's up"]):
+    if there_exists(["what's up", "how are you doing"]):
         sallie_speak(
             "Not much! Just been looking into ways to stay healthy. I learned that wearing a mask in public saves lives")
         sallie_speak("Hope you are rocking one!")
@@ -95,22 +95,33 @@ def respond(voice_data):
         minutes = time[1]
         time = f"{hours} {minutes}"
         sallie_speak(time)
-
-    if there_exists(["exit", "quit", "goodbye"]):
-        sallie_speak("going offline")
-        exit()
-    if 'search' in voice_data:
-        search = record_audio('What do you want to search for?')
-        url = 'https://google.com/search?q=' + search
+    
+    # 5: search google - ask: search for mountains
+    if there_exists(["search for"]) and 'youtube' not in voice_data:
+        search_term = voice_data.split("for")[-1].strip()
+        url = f"https://google.com/search?q={search_term}"
         webbrowser.get().open(url)
-        sallie_speak('Here is what I found for ' + search + '...')
-        print('Here is what I found for ' + search + '...')
-    if 'find location' in voice_data:
+        sallie_speak(f'Here is what I found for {search_term} on google')
+        
+    # 6: search youtube - ask: search for python programming on youtube
+    if there_exists(["youtube"]):
+        search = voice_data.split("for")[-1].strip()
+        search_term = search.split("on")[0].strip()
+        url = f"https://www.youtube.com/results?search_query={search_term}"
+        webbrowser.get().open(url)
+        sallie_speak(f'Here is what I found for {search_term} on youtube')
+        
+    # 7: search location - ask: find location, search for location etc
+    if there_exists(["location"]):
         location = record_audio('What is the location?')
         url = 'https://google.nl/maps/place/' + location + '/&amp;'
         webbrowser.get().open(url)
         sallie_speak('Here is the location for ' + location)
-        print('Here is the location for ' + location)
+    
+    # 8: Exit    
+    if there_exists(["exit", "quit", "goodbye", "bye"]):
+    sallie_speak("going offline")
+    exit()
 
 
 person_obj = Person()
