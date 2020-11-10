@@ -86,6 +86,7 @@ def respond(voice_data):
         sallie_speak("what should I call you?")
         person_name = record_audio()
         sallie_speak(f"Nice to meet you {person_name}")
+        person_obj.set_name(person_name)  # remember name in person object
 
     # 4: time
     if there_exists(["what time is it", "tell me the time","what's the time"]):
