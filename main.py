@@ -7,11 +7,12 @@ import random
 import time
 
 r = sr.Recognizer()     # instance of Recognizer class to recognize speech
-translator = Translator()   # initialization
-
+translator = Translator()   # initialization- creating instance
 speaker = pyttsx3.init()    # object creation
+
 voices = speaker.getProperty('voices')  # getting details of current voice
 
+# changing index, changes voices. 0 for male
 # changing index, changes voices. 1 for female
 speaker.setProperty('voice', voices[1].id)
 
@@ -45,8 +46,9 @@ def record_audio(query=False):  # Recording voice
         print(f"Me: {voice_data.lower()}")  # print what user said
         return voice_data.lower()
 
-
 # Voice Assistant reply
+
+
 def sallie_speak(audio_string):
     print('Sallie: ' + audio_string)
     speaker.say(audio_string)
@@ -71,36 +73,36 @@ def respond(voice_data):
         greet = greetings[random.randint(0, len(greetings) - 1)]
         sallie_speak(greet)
 
-    if there_exists(["how are you", "how are you doing"]):
+    elif there_exists(["how are you", "how are you doing"]):
         sallie_speak(f"I'm very well, thanks for asking {person_obj.name}")
 
-    if there_exists(["what's up", "what are you up to"]):
+    elif there_exists(["what's up", "what are you up to"]):
         sallie_speak(
             "Not much! Just been looking into ways to stay healthy. I learned that wearing a mask in public saves lives")
         sallie_speak("Hope you are rocking one!")
 
     # 2: name
-    if there_exists(["what is your name", "what's your name", "tell me your name"]):
+    elif there_exists(["what is your name", "what's your name", "tell me your name"]):
         if person_obj.name:
             sallie_speak("my name is Sallie")
         else:
             sallie_speak("my name is Sallie. what's your name?")
 
-    if there_exists(["my name is"]):
+    elif there_exists(["my name is"]):
         person_name = voice_data.split("is")[-1].strip()
         sallie_speak(f"okay, i will remember that {person_name}")
         person_obj.set_name(person_name)  # remember name in person object
 
-    if there_exists(["that's wrong name"]):
+    elif there_exists(["wrong name"]):
         sallie_speak("what should I call you?")
         person_name = record_audio()
         sallie_speak(f"Nice to meet you {person_name}")
         person_obj.set_name(person_name)  # remember name in person object
 
     # 4: time
-    if there_exists(["what time is it", "tell me the time", "what's the time"]):
+    elif there_exists(["what time is it", "tell me the time", "what's the time"]):
         # time format: 'Wed Nov 11 16:49:13 2020'
-        time = ctime().split(" ")[3].split(":")[0:2]
+        time = ctime().split()[3].split(":")[0:2]  # time = ['16', '49']
         if time[0] == "00":
             hours = "12"
             minutes = " am"
@@ -114,47 +116,45 @@ def respond(voice_data):
             hours = time[0]
             minutes = " am"
         minutes = time[1] + minutes
-        time = f"{hours} {minutes}"
+        time = f"{hours} {minutes}"  # time = '4 49 pm'
         sallie_speak(time)
 
     # 5: search google - ask: search for mountains
-    if there_exists(["search for"]) and ('youtube' not in voice_data):
+    elif there_exists(["search for"]) and ('on youtube' not in voice_data):
         search_term = voice_data.split("for")[-1].strip()
         url = f"https://google.com/search?q={search_term}"
         webbrowser.get().open(url)
         sallie_speak(f'Here is what I found for {search_term} on google')
 
     # 6: search youtube - ask: search for mountains on youtube
-    if there_exists(["youtube"]):
-        # search = voice_data.split("for")[-1].strip()
-        # search_term = search.split("on")[0].strip()
+    elif there_exists(["on youtube"]):
         search_term = voice_data.split("for")[-1].split("on")[0].strip()
         url = f"https://www.youtube.com/results?search_query={search_term}"
         webbrowser.get().open(url)
         sallie_speak(f'Here is what I found for {search_term} on youtube')
 
     # 7: search location - ask: find location, search for location etc
-    if there_exists(["location"]):
+    elif there_exists(["location"]):
         location = record_audio('What is the location?')
         url = 'https://google.nl/maps/place/' + location + '/&amp;'
         webbrowser.get().open(url)
         sallie_speak('Here is the location for ' + location)
 
     # 8: Translator
-    if there_exists(["translate"]):
+    elif there_exists(["translate"]):
         to_translate_text = record_audio('What do you want to translate')
         translated_text = translator.translate(to_translate_text, dest="en")
         sallie_speak(translated_text.text)
 
     # 9: Exit
-    if there_exists(["exit", "quit", "goodbye", "bye"]):
+    elif there_exists(["exit", "quit", "goodbye", "bye"]):
         sallie_speak("going offline")
         exit()
 
 
 person_obj = Person()   # create Person object
-time.sleep(1)
 sallie_speak('How can I help you?')
-while 1:
+while True:
     voice_data = record_audio()  # get the voice input
     respond(voice_data)  # respond to voice data
+    time.sleep(1)
