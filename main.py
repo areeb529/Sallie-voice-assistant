@@ -5,6 +5,8 @@ from time import ctime
 import webbrowser
 import random
 import time
+import smtplib
+import requests
 
 r = sr.Recognizer()     # instance of Recognizer class to recognize speech
 translator = Translator()   # initialization- creating instance
@@ -21,12 +23,19 @@ rate = speaker.getProperty('rate')
 
 speaker.setProperty('rate', 150)    # setting up new voice rate
 
+todo_path = "todo.txt"
+
+user_api = "<your api key>"
+
 
 class Person:   # creating Person class to store the name of the Person object
     name = ''
 
     def set_name(self, name):
         self.name = name
+
+
+languages = {'english': 'en', 'hindi': 'hi', 'spanish': 'es', 'french': 'fr', 'german': 'de', 'italian': 'it'}
 
 
 def record_audio(query=False):  # Recording voice
@@ -63,6 +72,49 @@ def there_exists(list_of_words):
             return True
 
 
+def send_mail(content):
+    server = smtplib.SMTP('smtp.gmail.com', 587)    # setting up server connection
+    server.ehlo()
+    server.starttls()
+    server.ehlo()
+
+    server.login('<your mail id>', '<your password>')
+
+    subject = 'python project'
+    body = content
+
+    msg = f"Subject: {subject}\n\n{body}"
+
+    server.sendmail(
+        '<your mail id>',  # from mail
+        '<receiver mail id>',  # to mail
+        msg
+    )
+    sallie_speak('EMAIL HAS BEEN SENT!')
+
+    server.quit()
+
+
+def create_todo():
+    with open(todo_path, 'r+') as file:
+        file.seek(0)
+        content = []
+        todo = True
+        sallie_speak('what you want to add')
+        while todo:
+            item = record_audio()
+            if 'stop' in item:
+                sallie_speak('todo list completed. your todo list is')
+                break
+            content.append(item)
+            sallie_speak('next item')
+        # print(content)
+        for item in content:
+            sallie_speak(item)
+            file.write(item+'\n')
+        file.truncate()
+
+
 # Respond to voice data
 def respond(voice_data):
     # 1: greeting
@@ -78,7 +130,7 @@ def respond(voice_data):
 
     elif there_exists(["what's up", "what are you up to"]):
         sallie_speak(
-            "Not much! Just been looking into ways to stay healthy. I learned that wearing a mask in public saves lives")
+            "Not much! Just been looking into ways to stay healthy")
         sallie_speak("Hope you are rocking one!")
 
     # 2: name
@@ -142,11 +194,43 @@ def respond(voice_data):
 
     # 8: Translator
     elif there_exists(["translate"]):
-        to_translate_text = record_audio('What do you want to translate')
-        translated_text = translator.translate(to_translate_text, dest="en")
-        sallie_speak(translated_text.text)
+        sallie_speak('in which language do you want to translate?')
+        dest_lang = record_audio()
+        if dest_lang in languages.keys():
+            to_translate_text = record_audio('What do you want to translate')
+            translated_text = translator.translate(to_translate_text, dest=languages[dest_lang])
+            sallie_speak(translated_text.text)
+        else:
+            sallie_speak("I don't know this language")
 
-    # 9: Exit
+    # 9: Send mail
+    elif there_exists(["mail", "email"]):
+        try:
+            sallie_speak('what should i say?')
+            msg = record_audio()
+            send_mail(msg)
+        except Exception as e:
+            sallie_speak("Sorry I am not able to send this email")
+
+    # 10: To-Do
+    elif there_exists(["todo", "list"]):
+        create_todo()
+
+    # 11: weather
+    elif there_exists(["weather", "what is the weather"]):
+        location = record_audio('What is the location?')
+        complete_api_link = "https://api.openweathermap.org/data/2.5/weather?q="+location+"&appid="+user_api
+        api_link = requests.get(complete_api_link)
+        api_data = api_link.json()
+        # create variables to store and display data
+        temp_city = ((api_data['main']['temp']) - 273.15)
+        weather_desc = api_data['weather'][0]['description']
+        hmdt = api_data['main']['humidity']
+        wind_spd = api_data['wind']['speed']
+        sallie_speak(
+            f'temperature is {temp_city} weather is {weather_desc} humidity is {hmdt} and wind speed is {wind_spd}')
+
+    # 12: Exit
     elif there_exists(["exit", "quit", "goodbye", "bye"]):
         sallie_speak("going offline")
         exit()
@@ -157,4 +241,4 @@ sallie_speak('How can I help you?')
 while True:
     voice_data = record_audio()  # get the voice input
     respond(voice_data)  # respond to voice data
-    time.sleep(1)
+    time.sleep(0.5)
